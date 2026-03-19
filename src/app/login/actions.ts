@@ -4,6 +4,30 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 
+export async function loginWithGoogle() {
+  const supabase = await createClient()
+
+  // Build the callback URL dynamically depending on the current environment (local vs vercel)
+  const origin =
+    process.env.NODE_ENV === 'development'
+      ? 'http://localhost:3000'
+      : process.env.NEXT_PUBLIC_SITE_URL ??
+        (process.env.NEXT_PUBLIC_VERCEL_URL
+          ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
+          : 'http://localhost:3000')
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+    },
+  })
+
+  if (data.url) {
+    redirect(data.url)
+  }
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
